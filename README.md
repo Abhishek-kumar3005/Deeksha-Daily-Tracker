@@ -1,4 +1,4 @@
-# 8-Week .NET Full Stack Sprint Interactive Tracker
+# Deeksha Daily Tracker - 8-Week .NET Full Stack Sprint
 
 An interactive single-page web tracker for mastering .NET Core, Web APIs, EF Core, Microservices, Angular, Azure, and DSA in 8 structured weeks.
 

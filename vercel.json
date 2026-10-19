@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "deeksha-daily-tracker",
   "cleanUrls": true,
   "headers": [
     {
