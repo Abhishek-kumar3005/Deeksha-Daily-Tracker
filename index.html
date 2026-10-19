@@ -73,6 +73,36 @@
       letter-spacing: -0.5px;
       margin: 0;
     }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sync-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.28);
+      padding: 5px 12px;
+      border-radius: 9999px;
+      transition: all 0.25s ease;
+      letter-spacing: 0.2px;
+    }
+    .sync-status-badge.syncing {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .sync-status-badge.error {
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
     .header-toggle-badge {
       display: flex;
       align-items: center;
@@ -810,9 +840,12 @@
       <div class="header-left">
         <h1>DEEKSHA DAILY TRACKER • 8-WEEK SPRINT</h1>
       </div>
-      <div class="header-toggle-badge">
-        <span id="header-toggle-text">📊 Overview & Stats</span>
-        <span class="header-chevron">▼</span>
+      <div class="header-actions">
+        <div id="sync-status" class="sync-status-badge">🟢 Live Cloud Synced</div>
+        <div class="header-toggle-badge">
+          <span id="header-toggle-text">📊 Overview & Stats</span>
+          <span class="header-chevron">▼</span>
+        </div>
       </div>
     </div>
 
@@ -1014,6 +1047,7 @@
     const STORAGE_KEY = "dotnet_sprint_accordion_v1";
     const STORAGE_WEEKS_KEY = "dotnet_sprint_open_weeks_v1";
     const STORAGE_DASH_KEY = "dotnet_sprint_dash_v1";
+    const SYNC_API = "/api/sync";
 
     let userTicks = {};
     try {
@@ -1030,6 +1064,69 @@
     try {
       isDashboardOpen = JSON.parse(localStorage.getItem(STORAGE_DASH_KEY) || "false");
     } catch(e) {}
+
+    let syncDebounceTimer = null;
+
+    function setSyncStatus(state) {
+      const el = document.getElementById("sync-status");
+      if (!el) return;
+      if (state === "syncing") {
+        el.className = "sync-status-badge syncing";
+        el.innerHTML = "🔄 Syncing...";
+      } else if (state === "synced") {
+        el.className = "sync-status-badge";
+        el.innerHTML = "🟢 Live Cloud Synced";
+      } else if (state === "error") {
+        el.className = "sync-status-badge error";
+        el.innerHTML = "⚠️ Saved Locally";
+      }
+    }
+
+    async function pushToCloud() {
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(async () => {
+        try {
+          setSyncStatus("syncing");
+          const payload = {
+            userTicks,
+            openWeeks,
+            isDashboardOpen,
+            lastUpdated: new Date().toISOString()
+          };
+          const res = await fetch(SYNC_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) setSyncStatus("synced");
+          else setSyncStatus("error");
+        } catch (e) {
+          setSyncStatus("error");
+        }
+      }, 350);
+    }
+
+    async function fetchFromCloud(silent = false) {
+      try {
+        if (!silent) setSyncStatus("syncing");
+        const res = await fetch(SYNC_API + "?t=" + Date.now(), { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.userTicks) {
+            const currentStr = JSON.stringify(userTicks);
+            const newStr = JSON.stringify(data.userTicks);
+            if (currentStr !== newStr) {
+              userTicks = data.userTicks;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(userTicks));
+              renderAccordion();
+            }
+          }
+          setSyncStatus("synced");
+        }
+      } catch (e) {
+        if (!silent) setSyncStatus("error");
+      }
+    }
 
     function renderAccordion() {
       const container = document.getElementById("weeks-accordion-container");
@@ -1154,6 +1251,7 @@
       if (toggleText) {
         toggleText.innerText = isOpen ? "Hide Overview" : "📊 Overview & Stats";
       }
+      pushToCloud();
     }
 
     function toggleWeekAccordion(weekNum) {
@@ -1169,6 +1267,7 @@
           item.classList.remove("open");
         }
       }
+      pushToCloud();
     }
 
     function toggleAllWeeks() {
@@ -1191,6 +1290,7 @@
       const iconEl = document.getElementById("toggle-all-icon");
       if (txtEl) txtEl.innerText = targetState ? "Collapse All Weeks" : "Expand All Weeks";
       if (iconEl) iconEl.innerText = targetState ? "📁" : "📂";
+      pushToCloud();
     }
 
     function toggleDay(key, weekNum, event) {
@@ -1214,6 +1314,7 @@
       }
 
       updateProgress();
+      pushToCloud();
     }
 
     function toggleMilestone(key, weekNum, event) {
@@ -1236,6 +1337,7 @@
       }
 
       updateProgress();
+      pushToCloud();
     }
 
     function updateProgress() {
@@ -1310,14 +1412,20 @@
     }
 
     function resetAll() {
-      if (confirm("Kya aap sach mein saare checkboxes reset karna chahte hain?")) {
+      if (confirm("Kya aap sach mein saare checkboxes reset karna chahte hain? Yeh dono devices ke liye reset ho jayega!")) {
         userTicks = {};
         localStorage.removeItem(STORAGE_KEY);
         renderAccordion();
+        pushToCloud();
       }
     }
 
     renderAccordion();
+    fetchFromCloud();
+
+    // Live cloud polling every 5 seconds so both users see each other's changes in real time
+    setInterval(() => fetchFromCloud(true), 5000);
+    window.addEventListener("focus", () => fetchFromCloud(true));
   </script>
 </body>
 </html>
