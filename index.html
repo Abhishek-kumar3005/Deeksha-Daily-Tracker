@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>8-WEEK .NET FULL STACK SPRINT - Interactive Accordion Tracker</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-blue: #0284c7;
+      --accent-teal: #0d9488;
+      --accent-purple: #7c3aed;
+      --accent-orange: #ea580c;
+      --accent-emerald: #10b981;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent; 
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: var(--text-main);
+      padding: 20px;
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.12), 0 8px 12px -6px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Top Header Banner (Clickable Accordion) */
+    .header {
+      background: var(--bg-dark);
+      color: #ffffff;
+      padding: 18px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #1e293b;
+    }
+    .header:hover {
+      background: #0f172a;
+    }
+    .header-left h1 {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+    .header-toggle-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      transition: all 0.2s ease;
+    }
+    .header:hover .header-toggle-badge {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .header-chevron {
+      font-size: 11px;
+      transition: transform 0.3s ease;
+      display: inline-block;
+    }
+    .header.open .header-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Collapsible Dashboard Container */
+    .dashboard-collapse {
+      display: none;
+      animation: fadeIn 0.3s ease forwards;
+    }
+    .dashboard-collapse.open {
+      display: block;
+    }
+
+    /* Executive KPI Dashboard Bar */
+    .kpi-bar {
+      background: #f8fafc;
+      border-bottom: 2px solid #e2e8f0;
+      padding: 18px 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: center;
+    }
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kpi-ring-wrapper {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      flex-shrink: 0;
+    }
+    .kpi-info h4 {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .kpi-info .val {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 4 Daily Time Breakdown Cards - Ultra-Slim Strip */
+    .time-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      color: #ffffff;
+      font-size: 11px;
+    }
+    .time-block {
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      line-height: 1.2;
+      min-width: 0;
+    }
+    .time-title {
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      background: rgba(0, 0, 0, 0.22);
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .time-desc {
+      font-size: 11px;
+      opacity: 0.95;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .block-75 { background: var(--accent-blue); }
+    .block-30 { background: var(--accent-teal); }
+    .block-15 { background: var(--accent-purple); }
+    .block-sun { background: var(--accent-orange); }
+
+    /* Controls Bar: Search & Expand All */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 32px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #cbd5e1;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .controls-hint {
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-all-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .toggle-all-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+
+    /* Weeks Accordion Container */
+    .weeks-container {
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Accordion Week Item */
+    .week-accordion {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .week-accordion:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+    }
+    .week-accordion.open {
+      border-color: #94a3b8;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.07);
+    }
+    .week-accordion.completed {
+      border-color: #86efac;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
+    }
+
+    /* Floating Corner Party Popper Badge */
+    .corner-popper {
+      display: none;
+      position: absolute;
+      top: -12px;
+      right: -10px;
+      font-size: 22px;
+      line-height: 1;
+      background: #ffffff;
+      border: 2px solid #10b981;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+      z-index: 10;
+      animation: popBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+    }
+    .corner-popper.show {
+      display: flex;
+    }
+    @keyframes popBounce {
+      0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+      70% { transform: scale(1.3) rotate(15deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    /* Clickable Header Bar */
+    .week-header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      background: #ffffff;
+      border-radius: 13px;
+      transition: background 0.2s ease;
+      gap: 16px;
+    }
+    .week-accordion.open .week-header {
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      border-radius: 13px 13px 0 0;
+    }
+    .week-header:hover {
+      background: #f8fafc;
+    }
+
+    .week-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      min-width: 0;
+    }
+    
+    /* The Clickable Badge */
+    .week-badge {
+      color: white;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 900;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    .week-badge .num {
+      font-size: 22px;
+      line-height: 1;
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .week-title-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .week-title {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+    .week-subtitle {
+      font-size: 12.5px;
+      color: #64748b;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .dsa-pill {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #be123c;
+      background: #ffe4e6;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .week-header-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+
+    .week-counter-pill {
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-family: 'JetBrains Mono', monospace;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Circular Progress Ring */
+    .circle-wrapper {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+    }
+    .circle-svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+    .circle-bg {
+      fill: none;
+      stroke: #e2e8f0;
+      stroke-width: 6;
+    }
+    .circle-progress {
+      fill: none;
+      stroke: #10b981;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 157; /* 2 * PI * 25 */
+      stroke-dashoffset: 157;
+      transition: stroke-dashoffset 0.35s ease, stroke 0.3s ease;
+    }
+    .circle-pct-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      font-weight: 800;
+      color: #0f172a;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chevron-icon {
+      font-size: 14px;
+      color: #94a3b8;
+      transition: transform 0.3s ease, color 0.2s ease;
+      font-weight: bold;
+    }
+    .week-accordion.open .chevron-icon {
+      transform: rotate(180deg);
+      color: #0f172a;
+    }
+
+    /* Expandable Body (Hidden by default, reveals on click) */
+    .week-body {
+      display: none;
+      padding: 24px;
+      background: #ffffff;
+      animation: fadeIn 0.3s ease forwards;
+    }
+    .week-accordion.open .week-body {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Week Core Concepts & Topics Card */
+    .week-desc-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      line-height: 1.55;
+    }
+    .desc-heading {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .desc-text {
+      font-size: 13.5px;
+      color: #334155;
+      line-height: 1.5;
+    }
+    .dsa-tag-row {
+      margin-top: 10px;
+    }
+    .dsa-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #be123c;
+      background: #ffe4e6;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #fecdd3;
+    }
+    .week-counter-pill.completed {
+      background: #bbf7d0;
+      color: #166534;
+      border-color: #86efac;
+      font-weight: 800;
+    }
+
+    /* Day-by-Day Detailed Tickmark List */
+    .days-section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 10px;
+    }
+    .day-row-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .day-row-card:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+    .day-row-card.checked {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+    .day-left-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .day-tag {
+      font-size: 12px;
+      font-weight: 900;
+      color: #0f172a;
+      background: #e2e8f0;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+    .day-row-card.checked .day-tag {
+      background: #bbf7d0;
+      color: #166534;
+    }
+    .day-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+    }
+    .day-name-label {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .day-subtask {
+      font-size: 11.5px;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* Native Interactive Tick Checkbox */
+    .chk-btn {
+      width: 34px;
+      height: 34px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: white;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .chk-btn:hover {
+      border-color: #94a3b8;
+    }
+    .chk-btn:active {
+      transform: scale(0.90);
+    }
+    .chk-btn.checked {
+      background: #10b981;
+      border-color: #10b981;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .chk-btn.checked::after {
+      content: "✓";
+      font-size: 18px;
+    }
+
+    /* Footer & Rules */
+    .footer {
+      background: var(--bg-dark);
+      color: #f8fafc;
+      padding: 24px 32px;
+      border-top: 1px solid #334155;
+      font-size: 12.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .footer-rule {
+      line-height: 1.5;
+    }
+    .footer-rule strong {
+      color: #38bdf8;
+    }
+
+    /* Action Strip */
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 32px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .save-status {
+      font-size: 12px;
+      color: #10b981;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reset-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .reset-btn:hover { background: #dc2626; }
+
+    /* =========================================================================
+       RESPONSIVE MOBILE STYLES (< 768px)
+       ========================================================================= */
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+      .container {
+        border-radius: 14px;
+      }
+      .header {
+        padding: 18px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .header-left h1 {
+        font-size: 18px;
+      }
+      .header-right {
+        text-align: left;
+      }
+      .header-meta {
+        font-size: 12px;
+      }
+      .header-subtext {
+        font-size: 11px;
+      }
+
+      /* KPI Bar */
+      .kpi-bar {
+        padding: 12px;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .kpi-card {
+        padding: 10px;
+        gap: 10px;
+      }
+      .kpi-ring-wrapper {
+        width: 44px;
+        height: 44px;
+      }
+      .kpi-info h4 {
+        font-size: 9.5px;
+      }
+      .kpi-info .val {
+        font-size: 16px;
+      }
+
+      /* Time Strip (2x2 Grid) */
+      .time-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+      .time-block {
+        padding: 10px 12px;
+      }
+      .time-title {
+        font-size: 13.5px;
+      }
+      .time-desc {
+        font-size: 10.5px;
+      }
+
+      .controls-bar {
+        padding: 10px 14px;
+      }
+      .controls-hint {
+        font-size: 11.5px;
+      }
+
+      .weeks-container {
+        padding: 14px 10px;
+        gap: 10px;
+      }
+      .week-header {
+        padding: 12px 14px;
+        gap: 10px;
+      }
+      .week-badge {
+        padding: 8px 12px;
+        font-size: 10px;
+      }
+      .week-badge .num {
+        font-size: 18px;
+      }
+      .week-title {
+        font-size: 14px;
+      }
+      .week-subtitle {
+        font-size: 11.5px;
+      }
+      .dsa-pill {
+        display: none; /* keep mobile header clean */
+      }
+      .week-counter-pill {
+        display: none; /* save space on mobile */
+      }
+      .circle-wrapper {
+        width: 44px;
+        height: 44px;
+      }
+      .circle-pct-text {
+        font-size: 11px;
+      }
+
+      .week-body {
+        padding: 14px 12px;
+      }
+      .week-body-top {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 12px;
+      }
+      .days-grid {
+        grid-template-columns: 1fr;
+      }
+      .day-row-card {
+        padding: 10px 12px;
+      }
+      .chk-btn {
+        width: 38px;
+        height: 38px; /* Big touch target on mobile */
+      }
+
+      .footer {
+        padding: 16px 14px;
+        font-size: 11px;
+      }
+      .actions-bar {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+      .save-status {
+        justify-content: center;
+      }
+      .reset-btn {
+        width: 100%;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Header Banner (Click to toggle Stats & Time Schedule) -->
+    <div class="header" onclick="toggleDashboard()" title="Click to view/hide Dashboard Stats & Time Schedule">
+      <div class="header-left">
+        <h1>8-WEEK .NET FULL STACK SPRINT</h1>
+      </div>
+      <div class="header-toggle-badge">
+        <span id="header-toggle-text">📊 Overview & Stats</span>
+        <span class="header-chevron">▼</span>
+      </div>
+    </div>
+
+    <!-- Collapsible Dashboard (Hidden by default, expands only on click) -->
+    <div class="dashboard-collapse" id="dashboard-collapse">
+      <!-- Executive KPI Dashboard -->
+      <div class="kpi-bar">
+        <div class="kpi-card">
+          <div class="kpi-ring-wrapper">
+            <svg class="circle-svg" viewBox="0 0 60 60">
+              <circle class="circle-bg" cx="30" cy="30" r="25"></circle>
+              <circle class="circle-progress" id="overall-ring" cx="30" cy="30" r="25"></circle>
+            </svg>
+            <div class="circle-pct-text" id="overall-pct">0%</div>
+          </div>
+          <div class="kpi-info">
+            <h4>Overall Progress</h4>
+            <div class="val" id="overall-txt" style="color: #10b981;">0.0%</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h4>Daily Sessions Done</h4>
+            <div class="val" id="sessions-count">0 / 48</div>
+          </div>
+        </div>
+
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h4>Weeks Completed</h4>
+            <div class="val" id="weeks-count">0 / 8</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Daily Session Time Blocks (Ultra-Slim Strip) -->
+      <div class="time-strip">
+        <div class="time-block block-75" title="75 MIN: Learn + Build (70% coding, 30% theory)">
+          <span class="time-title">75 MIN</span>
+          <span class="time-desc">Learn + Build (70% code / 30% theory)</span>
+        </div>
+        <div class="time-block block-30" title="30 MIN: DSA / SQL practice (topic is in each week)">
+          <span class="time-title">30 MIN</span>
+          <span class="time-desc">DSA / SQL Practice</span>
+        </div>
+        <div class="time-block block-15" title="15 MIN: Revise + write notes + push code to GitHub">
+          <span class="time-title">15 MIN</span>
+          <span class="time-desc">Revise & GitHub Push</span>
+        </div>
+        <div class="time-block block-sun" title="SUNDAY: Rest or catch-up buffer">
+          <span class="time-title">SUNDAY</span>
+          <span class="time-desc">Rest / Catch-up Buffer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weeks Accordion Container -->
+    <div class="weeks-container" id="weeks-accordion-container">
+      <!-- Injected dynamically by JS -->
+    </div>
+
+
+  </div>
+
+  <script>
+    const weeksData = [
+      {
+        week: 1,
+        color: "#2563eb",
+        title: ".NET Core Foundations I",
+        desc: "C# you must know cold: async/await, LINQ, generics, delegates, IEnumerable vs IQueryable. Build an ASP.NET Core Web API: controllers, routing, dependency injection + lifetimes (Singleton/Scoped/Transient), middleware pipeline, Swagger.",
+        dsa: "DSA: arrays + hashing",
+        output: "Job-Tracker Web API with CRUD (in-memory data)",
+        days: [
+          { day: "Mon", full: "Monday", task: "C# Fundamentals (async/await, Task, Threading)" },
+          { day: "Tue", full: "Tuesday", task: "LINQ deep-dive, Generics, Delegates & Action/Func" },
+          { day: "Wed", full: "Wednesday", task: "IEnumerable vs IQueryable & ASP.NET Core Setup" },
+          { day: "Thu", full: "Thursday", task: "Controllers, Routing, DI lifetimes (Singleton/Scoped/Transient)" },
+          { day: "Fri", full: "Friday", task: "Middleware Pipeline & Swagger Setup" },
+          { day: "Sat", full: "Saturday", task: "Job-Tracker Web API CRUD Completion & Testing" }
+        ]
+      },
+      {
+        week: 2,
+        color: "#1d4ed8",
+        title: ".NET Core Foundations II",
+        desc: "EF Core code-first, migrations, relationships with SQL Server. JWT authentication, validation, global error handling, logging. xUnit + Moq basics.",
+        dsa: "DSA: strings + hashmap",
+        output: "API + SQL DB + JWT login + 5 unit tests, pushed to GitHub",
+        days: [
+          { day: "Mon", full: "Monday", task: "EF Core Code-First setup & Initial Migrations" },
+          { day: "Tue", full: "Tuesday", task: "Entity Relationships (1:1, 1:N, M:N) with SQL Server" },
+          { day: "Wed", full: "Wednesday", task: "JWT Authentication & Claims-based authorization" },
+          { day: "Thu", full: "Thursday", task: "FluentValidation & Global Error Handling" },
+          { day: "Fri", full: "Friday", task: "Structured Logging with Serilog & xUnit setup" },
+          { day: "Sat", full: "Saturday", task: "Write 5 Unit Tests with Moq & push to GitHub" }
+        ]
+      },
+      {
+        week: 3,
+        color: "#be123c",
+        title: "TypeScript + Angular I",
+        desc: "TypeScript basics (types, interfaces, classes). Angular CLI, components, templates, directives, services and DI, routing.",
+        dsa: "DSA: two pointers + sliding window",
+        output: "Angular app with routing and a list page",
+        days: [
+          { day: "Mon", full: "Monday", task: "TypeScript essentials: Types, Interfaces, Classes & Generics" },
+          { day: "Tue", full: "Tuesday", task: "Angular CLI, Project Structure, Component Architecture" },
+          { day: "Wed", full: "Wednesday", task: "Templates, Data Binding (Property, Event, 2-way)" },
+          { day: "Thu", full: "Thursday", task: "Directives (*ngIf, *ngFor, custom) & Pipes" },
+          { day: "Fri", full: "Friday", task: "Angular Services & Dependency Injection" },
+          { day: "Sat", full: "Saturday", task: "Configure App Routing & Build Interactive List Page" }
+        ]
+      },
+      {
+        week: 4,
+        color: "#9f1239",
+        title: "Angular II: connect to your API",
+        desc: "HttpClient, RxJS basics (map, switchMap, async pipe), reactive forms + validation, JWT interceptor, route guards.",
+        dsa: "DSA: stack, queue, linked list",
+        output: "Login + CRUD screens working with your .NET API",
+        days: [
+          { day: "Mon", full: "Monday", task: "HttpClient Module & Basic GET/POST calls to .NET API" },
+          { day: "Tue", full: "Tuesday", task: "RxJS core: Observables, map, switchMap, async pipe" },
+          { day: "Wed", full: "Wednesday", task: "Reactive Forms & Custom Validation rules" },
+          { day: "Thu", full: "Thursday", task: "HTTP Interceptors (Attaching JWT Bearer Tokens)" },
+          { day: "Fri", full: "Friday", task: "Route Guards (AuthGuard for protected dashboard)" },
+          { day: "Sat", full: "Saturday", task: "End-to-End Login & CRUD integration test" }
+        ]
+      },
+      {
+        week: 5,
+        color: "#881337",
+        title: "Angular III: finish version 1",
+        desc: "Search, pagination, error and loading states, Angular Material (or Kendo UI), clean folder structure. Write a README with screenshots.",
+        dsa: "DSA: recursion + basic trees",
+        output: "Full-stack app v1 on GitHub. ADD IT TO RESUME",
+        days: [
+          { day: "Mon", full: "Monday", task: "Client-side Search, Filtering & Server-side Pagination" },
+          { day: "Tue", full: "Tuesday", task: "Error States, Loading Spinners & Toast Notifications" },
+          { day: "Wed", full: "Wednesday", task: "UI Styling with Angular Material (Dialogs, Tables, Cards)" },
+          { day: "Thu", full: "Thursday", task: "Code Cleanup, Strict Linting & Modular Folder Structure" },
+          { day: "Fri", full: "Friday", task: "Comprehensive README with Screenshots & Architecture Flow" },
+          { day: "Sat", full: "Saturday", task: "Tag v1.0 Release on GitHub & Update Resume Link" }
+        ]
+      },
+      {
+        week: 6,
+        color: "#0f766e",
+        title: "Azure + Docker + CI/CD",
+        desc: "Dockerize the API. Deploy to Azure App Service + Azure SQL. App settings, Key Vault concept, Application Insights. Pipeline with GitHub Actions or Azure DevOps.",
+        dsa: "DSA: binary search + sorting",
+        output: "Live Azure URL + working CI/CD pipeline",
+        days: [
+          { day: "Mon", full: "Monday", task: "Dockerize .NET Core Web API (Dockerfile & multi-stage build)" },
+          { day: "Tue", full: "Tuesday", task: "Docker Compose for Local API + SQL Server testing" },
+          { day: "Wed", full: "Wednesday", task: "Provision Azure App Service & Azure SQL Database" },
+          { day: "Thu", full: "Thursday", task: "App Settings, Connection Strings & Azure Key Vault concepts" },
+          { day: "Fri", full: "Friday", task: "Application Insights for live telemetry & log monitoring" },
+          { day: "Sat", full: "Saturday", task: "Build automated CI/CD pipeline using GitHub Actions" }
+        ]
+      },
+      {
+        week: 7,
+        color: "#4338ca",
+        title: "Architecture + Design",
+        desc: "Redis caching, message queue idea (Service Bus / RabbitMQ), API gateway + microservices basics. SOLID, 4-5 design patterns (Repository, Factory, Strategy), REST best practices. SQL: joins, window functions, indexes.",
+        dsa: "SQL: joins, window functions, indexes",
+        output: "Add caching + 1 background/queue feature; architecture diagram in README",
+        days: [
+          { day: "Mon", full: "Monday", task: "Redis In-Memory Distributed Caching integration" },
+          { day: "Tue", full: "Tuesday", task: "Message Queue concepts: Azure Service Bus / RabbitMQ basics" },
+          { day: "Wed", full: "Wednesday", task: "Implement Background Queue Worker Service" },
+          { day: "Thu", full: "Thursday", task: "API Gateway & Microservices fundamentals overview" },
+          { day: "Fri", full: "Friday", task: "SOLID Principles & Design Patterns (Repository, Factory, Strategy)" },
+          { day: "Sat", full: "Saturday", task: "Draw Architecture Diagram in README & benchmark response times" }
+        ]
+      },
+      {
+        week: 8,
+        color: "#c2410c",
+        title: "Interview Sprint",
+        desc: "Final resume + LinkedIn. Project deep-dive: explain every design choice. 3 mock interviews. Revise C# / SQL / Angular question sheet. Apply to 5 jobs a day.",
+        dsa: "DSA: mixed revision",
+        output: "25+ applications, 3 mocks done, resume v2 live",
+        days: [
+          { day: "Mon", full: "Monday", task: "Finalize ATS Resume v2 & LinkedIn Profile optimization" },
+          { day: "Tue", full: "Tuesday", task: "Project Deep-Dive: Prepare script explaining design decisions" },
+          { day: "Wed", full: "Wednesday", task: "Revise C# & .NET Core Top 50 Interview Questions" },
+          { day: "Thu", full: "Thursday", task: "Revise SQL (Joins, Indexing, SPs) & Angular Questions" },
+          { day: "Fri", full: "Friday", task: "Conduct 3 Full Mock Interviews (Record & review self)" },
+          { day: "Sat", full: "Saturday", task: "Apply to 25+ Tier-1 .NET Roles & track responses" }
+        ]
+      }
+    ];
+
+    const STORAGE_KEY = "dotnet_sprint_accordion_v1";
+    const STORAGE_WEEKS_KEY = "dotnet_sprint_open_weeks_v1";
+    const STORAGE_DASH_KEY = "dotnet_sprint_dash_v1";
+
+    let userTicks = {};
+    try {
+      userTicks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    } catch(e) { userTicks = {}; }
+
+    let openWeeks = { 1: true }; // Default week 1
+    try {
+      const savedWeeks = localStorage.getItem(STORAGE_WEEKS_KEY);
+      if (savedWeeks) openWeeks = JSON.parse(savedWeeks);
+    } catch(e) {}
+
+    let isDashboardOpen = false;
+    try {
+      isDashboardOpen = JSON.parse(localStorage.getItem(STORAGE_DASH_KEY) || "false");
+    } catch(e) {}
+
+    function renderAccordion() {
+      const container = document.getElementById("weeks-accordion-container");
+      container.innerHTML = "";
+
+      weeksData.forEach((w) => {
+        const isOpen = !!openWeeks[w.week];
+        const item = document.createElement("div");
+        item.className = `week-accordion ${isOpen ? 'open' : ''}`;
+        item.id = `accordion-w${w.week}`;
+
+        // Build Day Checkbox Cards
+        let dayCardsHTML = "";
+        w.days.forEach((d, idx) => {
+          const key = `w${w.week}_d${idx}`;
+          const isChecked = !!userTicks[key];
+          dayCardsHTML += `
+            <div class="day-row-card ${isChecked ? 'checked' : ''}" 
+                 id="card-${key}" 
+                 onclick="toggleDay('${key}', ${w.week}, event)">
+              <div class="day-left-meta">
+                <div class="day-tag">${d.day}</div>
+                <div class="day-details">
+                  <div class="day-name-label">${d.task}</div>
+                  <div class="day-subtask">75m Build • 30m DSA • 15m Git</div>
+                </div>
+              </div>
+              <div class="chk-btn ${isChecked ? 'checked' : ''}" id="btn-${key}"></div>
+            </div>
+          `;
+        });
+
+        const milestoneKey = `w${w.week}_output`;
+        const milestoneChecked = !!userTicks[milestoneKey];
+
+        item.innerHTML = `
+          <!-- Corner Party Popper (Floats on top right of the card when week is complete) -->
+          <div class="corner-popper" id="popper-w${w.week}" title="Week Completed! 🎉">🎉</div>
+
+          <!-- Clickable Header: Tap to Expand/Collapse -->
+          <div class="week-header" onclick="toggleWeekAccordion(${w.week})">
+            <div class="week-header-left">
+              <!-- Week Color Badge -->
+              <div class="week-badge" style="background: ${w.color};">
+                <div>WEEK</div>
+                <div class="num">${w.week}</div>
+              </div>
+
+              <!-- Title & Meta -->
+              <div class="week-title-meta">
+                <div class="week-title">${w.title}</div>
+                <div class="week-subtitle">
+                  <span>🎯 ${w.output}</span>
+                  ${w.dsa ? `<span class="dsa-pill">${w.dsa}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Status Counter + Green Ring + Arrow -->
+            <div class="week-header-right">
+              <div class="week-counter-pill" id="pill-w${w.week}">0/6 Done</div>
+
+              <!-- Green Circular Progress Ring -->
+              <div class="circle-wrapper">
+                <svg class="circle-svg" viewBox="0 0 60 60">
+                  <circle class="circle-bg" cx="30" cy="30" r="25"></circle>
+                  <circle class="circle-progress" id="ring-w${w.week}" cx="30" cy="30" r="25"></circle>
+                </svg>
+                <div class="circle-pct-text" id="pct-w${w.week}">0%</div>
+              </div>
+
+              <div class="chevron-icon">▼</div>
+            </div>
+          </div>
+
+          <!-- Expandable Body -->
+          <div class="week-body">
+            <!-- Core Concepts & Topics Box -->
+            <div class="week-desc-card">
+              <div class="desc-heading">📘 Core Concepts & Topics:</div>
+              <div class="desc-text">${w.desc}</div>
+              ${w.dsa ? `<div class="dsa-tag-row"><span class="dsa-badge">📌 ${w.dsa}</span></div>` : ''}
+            </div>
+
+            <!-- Daily Checklists -->
+            <div class="days-section-title">
+              <span>📅 Daily 2-Hour Sessions Checklist (Tap to Tick):</span>
+              <span style="font-size:11px; color:#10b981; font-weight:700;">Live Saved</span>
+            </div>
+            <div class="days-grid">
+              ${dayCardsHTML}
+            </div>
+          </div>
+        `;
+
+        container.appendChild(item);
+      });
+
+      if (isDashboardOpen) {
+        const db = document.getElementById("dashboard-collapse");
+        const header = document.querySelector(".header");
+        const toggleText = document.getElementById("header-toggle-text");
+        if (db) db.classList.add("open");
+        if (header) header.classList.add("open");
+        if (toggleText) toggleText.innerText = "Hide Overview";
+      }
+
+      updateProgress();
+    }
+
+    function toggleDashboard() {
+      const db = document.getElementById("dashboard-collapse");
+      const header = document.querySelector(".header");
+      const toggleText = document.getElementById("header-toggle-text");
+      if (!db || !header) return;
+
+      const isOpen = db.classList.toggle("open");
+      header.classList.toggle("open", isOpen);
+      try {
+        localStorage.setItem(STORAGE_DASH_KEY, JSON.stringify(isOpen));
+      } catch(e) {}
+      if (toggleText) {
+        toggleText.innerText = isOpen ? "Hide Overview" : "📊 Overview & Stats";
+      }
+    }
+
+    function toggleWeekAccordion(weekNum) {
+      openWeeks[weekNum] = !openWeeks[weekNum];
+      try {
+        localStorage.setItem(STORAGE_WEEKS_KEY, JSON.stringify(openWeeks));
+      } catch(e) {}
+      const item = document.getElementById(`accordion-w${weekNum}`);
+      if (item) {
+        if (openWeeks[weekNum]) {
+          item.classList.add("open");
+        } else {
+          item.classList.remove("open");
+        }
+      }
+    }
+
+    function toggleAllWeeks() {
+      const allOpen = Object.values(openWeeks).filter(Boolean).length === weeksData.length;
+      const targetState = !allOpen;
+
+      weeksData.forEach(w => {
+        openWeeks[w.week] = targetState;
+        const item = document.getElementById(`accordion-w${w.week}`);
+        if (item) {
+          if (targetState) item.classList.add("open");
+          else item.classList.remove("open");
+        }
+      });
+      try {
+        localStorage.setItem(STORAGE_WEEKS_KEY, JSON.stringify(openWeeks));
+      } catch(e) {}
+
+      const txtEl = document.getElementById("toggle-all-text");
+      const iconEl = document.getElementById("toggle-all-icon");
+      if (txtEl) txtEl.innerText = targetState ? "Collapse All Weeks" : "Expand All Weeks";
+      if (iconEl) iconEl.innerText = targetState ? "📁" : "📂";
+    }
+
+    function toggleDay(key, weekNum, event) {
+      if (event) event.stopPropagation();
+
+      userTicks[key] = !userTicks[key];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userTicks));
+
+      if (navigator.vibrate) navigator.vibrate(25);
+
+      const btn = document.getElementById(`btn-${key}`);
+      const card = document.getElementById(`card-${key}`);
+      if (btn && card) {
+        if (userTicks[key]) {
+          btn.classList.add("checked");
+          card.classList.add("checked");
+        } else {
+          btn.classList.remove("checked");
+          card.classList.remove("checked");
+        }
+      }
+
+      updateProgress();
+    }
+
+    function toggleMilestone(key, weekNum, event) {
+      if (event) event.stopPropagation();
+
+      userTicks[key] = !userTicks[key];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userTicks));
+
+      if (navigator.vibrate) navigator.vibrate(35);
+
+      const btn = document.getElementById(`mbtn-${key}`);
+      if (btn) {
+        if (userTicks[key]) {
+          btn.classList.add("checked");
+          btn.innerHTML = "<span>🎯 Output Shipped!</span>";
+        } else {
+          btn.classList.remove("checked");
+          btn.innerHTML = "<span>⬜ Mark Output Shipped</span>";
+        }
+      }
+
+      updateProgress();
+    }
+
+    function updateProgress() {
+      let totalCheckedDays = 0;
+      let totalMilestones = 0;
+      let completedWeeks = 0;
+      const CIRCUMFERENCE = 157; // 2 * PI * 25
+
+      weeksData.forEach((w) => {
+        let weekChecked = 0;
+        for (let i = 0; i < 6; i++) {
+          if (userTicks[`w${w.week}_d${i}`]) {
+            weekChecked++;
+          }
+        }
+        totalCheckedDays += weekChecked;
+        if (weekChecked === 6) completedWeeks++;
+
+        if (userTicks[`w${w.week}_output`]) {
+          totalMilestones++;
+        }
+
+        // Update Week Progress Ring, Pill, and Corner Party Popper
+        const weekPct = Math.round((weekChecked / 6) * 100);
+        const ring = document.getElementById(`ring-w${w.week}`);
+        const pctText = document.getElementById(`pct-w${w.week}`);
+        const pillText = document.getElementById(`pill-w${w.week}`);
+        const popper = document.getElementById(`popper-w${w.week}`);
+        const accordion = document.getElementById(`accordion-w${w.week}`);
+
+        if (ring) {
+          const offset = CIRCUMFERENCE - (weekPct / 100) * CIRCUMFERENCE;
+          ring.style.strokeDashoffset = offset;
+        }
+        if (pctText) pctText.innerText = `${weekPct}%`;
+
+        if (weekChecked === 6) {
+          if (pillText) {
+            pillText.innerText = `6/6 Done 🎉`;
+            pillText.classList.add("completed");
+          }
+          if (popper) popper.classList.add("show");
+          if (accordion) accordion.classList.add("completed");
+        } else {
+          if (pillText) {
+            pillText.innerText = `${weekChecked}/6 Done`;
+            pillText.classList.remove("completed");
+          }
+          if (popper) popper.classList.remove("show");
+          if (accordion) accordion.classList.remove("completed");
+        }
+      });
+
+      // Update Overall Sprint KPI
+      const overallPct = ((totalCheckedDays / 48) * 100).toFixed(1);
+      const overallRing = document.getElementById("overall-ring");
+      const overallPctEl = document.getElementById("overall-pct");
+      const overallTxt = document.getElementById("overall-txt");
+      const sessionsCount = document.getElementById("sessions-count");
+      const milestonesCount = document.getElementById("milestones-count");
+      const weeksCount = document.getElementById("weeks-count");
+
+      if (overallRing) {
+        const overallOffset = CIRCUMFERENCE - ((totalCheckedDays / 48)) * CIRCUMFERENCE;
+        overallRing.style.strokeDashoffset = overallOffset;
+      }
+      if (overallPctEl) overallPctEl.innerText = `${Math.round(overallPct)}%`;
+      if (overallTxt) overallTxt.innerText = `${overallPct}%`;
+      if (sessionsCount) sessionsCount.innerText = `${totalCheckedDays} / 48`;
+      if (milestonesCount) milestonesCount.innerText = `${totalMilestones} / 8`;
+      if (weeksCount) weeksCount.innerText = `${completedWeeks} / 8`;
+    }
+
+    function resetAll() {
+      if (confirm("Kya aap sach mein saare checkboxes reset karna chahte hain?")) {
+        userTicks = {};
+        localStorage.removeItem(STORAGE_KEY);
+        renderAccordion();
+      }
+    }
+
+    renderAccordion();
+  </script>
+</body>
+</html>
