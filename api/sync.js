@@ -42,6 +42,7 @@ module.exports = async (req, res) => {
       const blob = await put(PATHNAME, jsonContent, {
         access: 'public',
         addRandomSuffix: false,
+        allowOverwrite: true,
         contentType: 'application/json',
       });
       return res.status(200).json({ success: true, url: blob.url });

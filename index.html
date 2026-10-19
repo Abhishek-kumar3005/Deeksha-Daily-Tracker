@@ -73,36 +73,6 @@
       letter-spacing: -0.5px;
       margin: 0;
     }
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .sync-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11.5px;
-      font-weight: 700;
-      color: #34d399;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(52, 211, 153, 0.28);
-      padding: 5px 12px;
-      border-radius: 9999px;
-      transition: all 0.25s ease;
-      letter-spacing: 0.2px;
-    }
-    .sync-status-badge.syncing {
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.12);
-      border-color: rgba(56, 189, 248, 0.35);
-    }
-    .sync-status-badge.error {
-      color: #f87171;
-      background: rgba(239, 68, 68, 0.12);
-      border-color: rgba(239, 68, 68, 0.35);
-    }
     .header-toggle-badge {
       display: flex;
       align-items: center;
@@ -840,12 +810,9 @@
       <div class="header-left">
         <h1>DEEKSHA DAILY TRACKER • 8-WEEK SPRINT</h1>
       </div>
-      <div class="header-actions">
-        <div id="sync-status" class="sync-status-badge">🟢 Live Cloud Synced</div>
-        <div class="header-toggle-badge">
-          <span id="header-toggle-text">📊 Overview & Stats</span>
-          <span class="header-chevron">▼</span>
-        </div>
+      <div class="header-toggle-badge">
+        <span id="header-toggle-text">📊 Overview & Stats</span>
+        <span class="header-chevron">▼</span>
       </div>
     </div>
 
@@ -1067,64 +1034,50 @@
 
     let syncDebounceTimer = null;
 
-    function setSyncStatus(state) {
-      const el = document.getElementById("sync-status");
-      if (!el) return;
-      if (state === "syncing") {
-        el.className = "sync-status-badge syncing";
-        el.innerHTML = "🔄 Syncing...";
-      } else if (state === "synced") {
-        el.className = "sync-status-badge";
-        el.innerHTML = "🟢 Live Cloud Synced";
-      } else if (state === "error") {
-        el.className = "sync-status-badge error";
-        el.innerHTML = "⚠️ Saved Locally";
-      }
-    }
-
     async function pushToCloud() {
       if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
       syncDebounceTimer = setTimeout(async () => {
         try {
-          setSyncStatus("syncing");
           const payload = {
             userTicks,
             openWeeks,
             isDashboardOpen,
             lastUpdated: new Date().toISOString()
           };
-          const res = await fetch(SYNC_API, {
+          await fetch(SYNC_API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
-          if (res.ok) setSyncStatus("synced");
-          else setSyncStatus("error");
         } catch (e) {
-          setSyncStatus("error");
+          console.warn("Cloud save error:", e);
         }
-      }, 350);
+      }, 150);
     }
 
-    async function fetchFromCloud(silent = false) {
+    async function initCloudSync() {
       try {
-        if (!silent) setSyncStatus("syncing");
         const res = await fetch(SYNC_API + "?t=" + Date.now(), { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (data && data.userTicks) {
-            const currentStr = JSON.stringify(userTicks);
-            const newStr = JSON.stringify(data.userTicks);
-            if (currentStr !== newStr) {
-              userTicks = data.userTicks;
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(userTicks));
-              renderAccordion();
-            }
+          if (data && typeof data === "object") {
+            const cloudTicks = data.userTicks || {};
+            // Merge: preserve both local and cloud ticks
+            userTicks = { ...userTicks, ...cloudTicks };
+            if (data.openWeeks) openWeeks = data.openWeeks;
+            if (typeof data.isDashboardOpen === "boolean") isDashboardOpen = data.isDashboardOpen;
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(userTicks));
+            localStorage.setItem(STORAGE_WEEKS_KEY, JSON.stringify(openWeeks));
+            localStorage.setItem(STORAGE_DASH_KEY, JSON.stringify(isDashboardOpen));
+
+            renderAccordion();
+            // Sync up any missing local ticks to cloud
+            pushToCloud();
           }
-          setSyncStatus("synced");
         }
       } catch (e) {
-        if (!silent) setSyncStatus("error");
+        console.warn("Cloud read error:", e);
       }
     }
 
@@ -1421,11 +1374,7 @@
     }
 
     renderAccordion();
-    fetchFromCloud();
-
-    // Live cloud polling every 5 seconds so both users see each other's changes in real time
-    setInterval(() => fetchFromCloud(true), 5000);
-    window.addEventListener("focus", () => fetchFromCloud(true));
+    initCloudSync();
   </script>
 </body>
 </html>
